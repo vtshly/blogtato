@@ -7,33 +7,11 @@ use crate::data::BlogData;
 use crate::data::index::resolve_posts;
 use crate::data::schema::FeedItem;
 use crate::display::{RenderCtx, render_grouped};
-use crate::query::{DateFilter, GroupKey, Query, ReadFilter};
-
-/// Default query when no arguments are provided: unread posts from the last
-/// 90 days, grouped by week.
-pub(crate) fn default_query() -> Query {
-    let since = chrono::Utc::now() - chrono::Duration::days(90);
-    Query {
-        keys: vec![GroupKey::Week],
-        filter: None,
-        date_filter: DateFilter {
-            since: Some(since),
-            until: None,
-        },
-        shorthands: Vec::new(),
-        read_filter: ReadFilter::Unread,
-    }
-}
+use crate::query::Query;
 
 pub(crate) fn cmd_show(store: &BlogData, query: &Query) -> anyhow::Result<()> {
-    let effective_query;
-    let query = if query.is_empty() {
-        effective_query = default_query();
-        &effective_query
-    } else {
-        query
-    };
-    let resolved = resolve_posts(store, query)?;
+    let query = query.or_default_view();
+    let resolved = resolve_posts(store, &query)?;
     ensure!(!resolved.items.is_empty(), "No matching posts");
 
     let read_ids: HashSet<String> = store

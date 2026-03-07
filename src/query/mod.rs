@@ -9,7 +9,7 @@ use chumsky::prelude::*;
 use crate::data::schema::FeedItem;
 use grammar::{Token, arg_parser};
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub(crate) struct DateFilter {
     pub since: Option<DateTime<Utc>>,
     pub until: Option<DateTime<Utc>>,
@@ -67,7 +67,7 @@ pub(crate) enum ReadFilter {
     Unread,
 }
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub(crate) struct Query {
     pub keys: Vec<GroupKey>,
     pub filter: Option<String>,
@@ -84,6 +84,31 @@ impl Query {
             && self.date_filter.until.is_none()
             && self.shorthands.is_empty()
             && matches!(self.read_filter, ReadFilter::Any)
+    }
+
+    /// Default query when no arguments are provided: unread posts from the last
+    /// 90 days, grouped by week.
+    pub(crate) fn default_view() -> Self {
+        let since = chrono::Utc::now() - chrono::Duration::days(90);
+        Self {
+            keys: vec![GroupKey::Week],
+            filter: None,
+            date_filter: DateFilter {
+                since: Some(since),
+                until: None,
+            },
+            shorthands: Vec::new(),
+            read_filter: ReadFilter::Unread,
+        }
+    }
+
+    /// Returns `self` if non-empty, otherwise the default view query.
+    pub(crate) fn or_default_view(&self) -> std::borrow::Cow<'_, Self> {
+        if self.is_empty() {
+            std::borrow::Cow::Owned(Self::default_view())
+        } else {
+            std::borrow::Cow::Borrowed(self)
+        }
     }
 }
 
