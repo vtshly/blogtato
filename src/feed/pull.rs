@@ -35,7 +35,7 @@ pub(crate) fn apply_fetched(
     results: Vec<FetchResult>,
     pb: &ProgressBar,
 ) -> anyhow::Result<()> {
-    for (source, result) in results {
+    for (mut source, result) in results {
         let (meta, items) = match result {
             Ok(r) => r,
             Err(e) => {
@@ -48,11 +48,10 @@ pub(crate) fn apply_fetched(
             item.feed = feed_id.clone();
             tx.posts.upsert(item);
         }
-        let mut updated = source.clone();
-        updated.title = meta.title;
-        updated.site_url = meta.site_url;
-        updated.description = meta.description;
-        tx.feeds.upsert(updated);
+        source.title = meta.title;
+        source.site_url = meta.site_url;
+        source.description = meta.description;
+        tx.feeds.upsert(source);
     }
     Ok(())
 }

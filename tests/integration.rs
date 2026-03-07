@@ -682,8 +682,8 @@ fn test_feed_ls_no_feeds_prints_error() {
     let output = ctx.run(&["feed", "ls"]).failure();
     let stderr = output.stderr_str();
     assert!(
-        stderr.contains("No matching feeds"),
-        "expected 'No matching feeds' on stderr, got: {}",
+        stderr.contains("No feeds found"),
+        "expected 'No feeds found' on stderr, got: {}",
         stderr
     );
 }

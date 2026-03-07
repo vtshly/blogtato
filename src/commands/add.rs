@@ -12,7 +12,7 @@ pub(crate) fn resolve_feed_url(url: &str) -> anyhow::Result<String> {
     let bytes = response.bytes()?;
 
     // Try parsing as RSS/Atom — if it works, the URL is already a feed
-    if crate::feed::rss::parse(&bytes[..]).is_ok() || crate::feed::atom::parse(&bytes[..]).is_ok() {
+    if is_feed_content(&bytes) {
         sp.finish_and_clear();
         return Ok(url.to_string());
     }
@@ -57,6 +57,10 @@ pub(crate) fn resolve_feed_url(url: &str) -> anyhow::Result<String> {
     }
 }
 
+fn is_feed_content(bytes: &[u8]) -> bool {
+    crate::feed::rss::parse(bytes).is_ok() || crate::feed::atom::parse(bytes).is_ok()
+}
+
 fn is_valid_feed(client: &reqwest::blocking::Client, url: &str) -> bool {
     let Ok(resp) = client.get(url).send().and_then(|r| r.error_for_status()) else {
         return false;
@@ -64,7 +68,7 @@ fn is_valid_feed(client: &reqwest::blocking::Client, url: &str) -> bool {
     let Ok(bytes) = resp.bytes() else {
         return false;
     };
-    crate::feed::rss::parse(&bytes[..]).is_ok() || crate::feed::atom::parse(&bytes[..]).is_ok()
+    is_feed_content(&bytes)
 }
 
 pub(crate) fn cmd_add(tx: &mut Transaction, url: &str) -> anyhow::Result<()> {

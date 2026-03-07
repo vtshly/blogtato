@@ -68,10 +68,6 @@ pub(crate) fn compute_shorthands(ids: &[String]) -> Vec<String> {
 
     let base9s: Vec<String> = ids.iter().map(|id| hex_to_base9(id)).collect();
 
-    if base9s.len() == 1 {
-        return vec![base9s[0].chars().next().unwrap().to_string()];
-    }
-
     let max_len = base9s.iter().map(|s| s.len()).max().unwrap_or(1);
     for len in 1..=max_len {
         let prefixes: Vec<String> = base9s

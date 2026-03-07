@@ -29,7 +29,7 @@ fn strip_tz_colon(s: &str) -> String {
             && bytes[4].is_ascii_digit()
             && bytes[5].is_ascii_digit()
         {
-            return format!("{}{}{}{}", head, &tail[..3], &tail[4..6], "");
+            return format!("{}{}{}", head, &tail[..3], &tail[4..6]);
         }
     }
     s.to_string()
