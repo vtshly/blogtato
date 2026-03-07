@@ -1,4 +1,5 @@
 mod grammar;
+pub(crate) mod resolve;
 
 use std::collections::HashMap;
 

@@ -4,10 +4,10 @@ use std::io::IsTerminal;
 use anyhow::ensure;
 
 use crate::data::BlogData;
-use crate::data::index::resolve_posts;
 use crate::data::schema::FeedItem;
 use crate::display::{RenderCtx, render_grouped};
 use crate::query::Query;
+use crate::query::resolve::resolve_posts;
 
 pub(crate) fn cmd_show(store: &BlogData, query: &Query) -> anyhow::Result<()> {
     let query = query.or_default_view();

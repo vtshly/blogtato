@@ -1,9 +1,9 @@
 use anyhow::ensure;
 
 use crate::data::BlogData;
-use crate::data::index::resolve_posts;
 use crate::data::schema::{FeedItem, ReadMark};
 use crate::query::Query;
+use crate::query::resolve::resolve_posts;
 
 pub(crate) fn cmd_open(store: &mut BlogData, query: &Query) -> anyhow::Result<()> {
     let resolved = resolve_posts(store, query)?;
