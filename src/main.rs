@@ -144,9 +144,9 @@ fn store_dir() -> anyhow::Result<PathBuf> {
         .ok_or_else(|| anyhow::anyhow!("could not determine data directory; set RSS_STORE"))
 }
 
-fn ensure_no_query(query: &query::Query, command: &str) -> anyhow::Result<()> {
+fn reject_filter(filter: &[String], command: &str) -> anyhow::Result<()> {
     anyhow::ensure!(
-        query.is_empty(),
+        filter.is_empty(),
         "{command} command does not accept a filter"
     );
     Ok(())
@@ -164,10 +164,16 @@ fn run() -> anyhow::Result<()> {
     let mut store = data::BlogData::open(&store_dir)?;
 
     match args.command {
+        // Commands that accept a query/filter
         Some(Command::Show { ref args }) => {
             let all_args: Vec<String> = filter.into_iter().chain(args.iter().cloned()).collect();
             let q = query::parse_query(&all_args)?;
             commands::show::cmd_show(&store, &q)?;
+        }
+        Some(Command::Export { ref args }) => {
+            let all_args: Vec<String> = filter.into_iter().chain(args.iter().cloned()).collect();
+            let q = query::parse_query(&all_args)?;
+            commands::export::cmd_export(&store, &q)?;
         }
         Some(Command::Open) => {
             let q = query::parse_query(&filter)?;
@@ -181,16 +187,16 @@ fn run() -> anyhow::Result<()> {
             let q = query::parse_query(&filter)?;
             commands::open::cmd_unread(&mut store, &q)?;
         }
-        Some(Command::Export { ref args }) => {
-            let all_args: Vec<String> = filter.into_iter().chain(args.iter().cloned()).collect();
-            let q = query::parse_query(&all_args)?;
-            commands::export::cmd_export(&store, &q)?;
+        None => {
+            let q = query::parse_query(&filter)?;
+            commands::show::cmd_show(&store, &q)?;
         }
+
+        // Commands that reject filters
         Some(Command::Feed {
             command: FeedCommand::Add { ref url },
         }) => {
-            let q = query::parse_query(&filter)?;
-            ensure_no_query(&q, "feed")?;
+            reject_filter(&filter, "feed")?;
             let resolved = commands::add::resolve_feed_url(url)?;
             if resolved != *url {
                 eprintln!("Discovered feed: {resolved}");
@@ -204,8 +210,7 @@ fn run() -> anyhow::Result<()> {
         Some(Command::Feed {
             command: FeedCommand::Rm { ref url },
         }) => {
-            let q = query::parse_query(&filter)?;
-            ensure_no_query(&q, "feed")?;
+            reject_filter(&filter, "feed")?;
             store.transact(&format!("remove feed: {url}"), |tx| {
                 commands::remove::cmd_remove(tx, url)
             })?;
@@ -213,25 +218,18 @@ fn run() -> anyhow::Result<()> {
         Some(Command::Feed {
             command: FeedCommand::Ls,
         }) => {
-            let q = query::parse_query(&filter)?;
-            ensure_no_query(&q, "feed")?;
+            reject_filter(&filter, "feed")?;
             commands::feed_ls::cmd_feed_ls(&store)?;
         }
         Some(Command::Sync) => {
-            let q = query::parse_query(&filter)?;
-            ensure_no_query(&q, "sync")?;
+            reject_filter(&filter, "sync")?;
             commands::sync::cmd_sync(&mut store)?;
         }
         Some(Command::Git { ref args }) => {
-            let q = query::parse_query(&filter)?;
-            ensure_no_query(&q, "git")?;
+            reject_filter(&filter, "git")?;
             store.git_passthrough(args)?;
         }
         Some(Command::Clone { .. }) => unreachable!(),
-        None => {
-            let q = query::parse_query(&filter)?;
-            commands::show::cmd_show(&store, &q)?;
-        }
     }
     Ok(())
 }
