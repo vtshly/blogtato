@@ -1,5 +1,22 @@
+//! Shorthands are short, keyboard-friendly identifiers for feeds and posts.
+//!
+//! **Feed shorthands** use the 9-key home row (`asdfghjkl`). Each feed's hex ID
+//! is converted to base-9 using these characters, then the shortest unique prefix
+//! is chosen so every feed gets a distinct shorthand (e.g. `a`, `sf`, `dk`).
+//! Because they derive from the stable hex ID, feed shorthands tend to remain the
+//! same across runs — users can rely on them in muscle memory and scripts.
+//!
+//! **Post shorthands** use a larger 34-character alphabet (home row + shifted +
+//! remaining letters) to keep shorthands short even with many posts. Posts are
+//! assigned sequentially by date order, skipping any that collide with reserved
+//! command names. These are ephemeral — they only need to stay stable between
+//! `blog sync` runs, since new posts shift the numbering.
+
+/// Alphabet for feed shorthands: the 9 home-row keys (base-9 encoding).
 const HOME_ROW: [char; 9] = ['a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l'];
 
+/// Alphabet for post shorthands: home row, shifted home row, then remaining
+/// letter keys. Gives base-34 encoding to keep shorthands short.
 const POST_ALPHABET: [char; 34] = [
     'a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l', 'A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L', 'q',
     'w', 'e', 'r', 't', 'y', 'i', 'o', 'p', 'z', 'x', 'c', 'v', 'b', 'n', 'm',
@@ -9,6 +26,8 @@ pub(crate) const RESERVED_COMMANDS: &[&str] = &[
     "show", "open", "read", "unread", "feed", "sync", "git", "clone", "export",
 ];
 
+/// Convert a hex string to a custom base using the given alphabet.
+/// Performs base conversion from base-16 digits to base-N where N = alphabet.len().
 fn hex_to_custom_base(hex: &str, alphabet: &[char]) -> String {
     let base = alphabet.len() as u16;
     if hex.is_empty() {
@@ -43,10 +62,12 @@ fn hex_to_custom_base(hex: &str, alphabet: &[char]) -> String {
         .collect()
 }
 
-fn hex_to_base9(hex: &str) -> String {
+/// Convert a hex ID to a home-row string for use as a feed shorthand.
+fn hex_to_home_row(hex: &str) -> String {
     hex_to_custom_base(hex, &HOME_ROW)
 }
 
+/// Convert a sequential index to a post shorthand using the post alphabet.
 pub(crate) fn index_to_shorthand(mut n: usize) -> String {
     let base = POST_ALPHABET.len();
     if n == 0 {
@@ -61,16 +82,17 @@ pub(crate) fn index_to_shorthand(mut n: usize) -> String {
     chars.into_iter().collect()
 }
 
+/// Compute the shortest unique home-row prefix for each hex ID.
 pub(crate) fn compute_shorthands(ids: &[String]) -> Vec<String> {
     if ids.is_empty() {
         return Vec::new();
     }
 
-    let base9s: Vec<String> = ids.iter().map(|id| hex_to_base9(id)).collect();
+    let encoded: Vec<String> = ids.iter().map(|id| hex_to_home_row(id)).collect();
 
-    let max_len = base9s.iter().map(|s| s.len()).max().unwrap_or(1);
+    let max_len = encoded.iter().map(|s| s.len()).max().unwrap_or(1);
     for len in 1..=max_len {
-        let prefixes: Vec<String> = base9s
+        let prefixes: Vec<String> = encoded
             .iter()
             .map(|s| s.chars().take(len).collect::<String>())
             .collect();
@@ -80,7 +102,7 @@ pub(crate) fn compute_shorthands(ids: &[String]) -> Vec<String> {
         }
     }
 
-    base9s
+    encoded
 }
 
 #[cfg(test)]
@@ -94,8 +116,8 @@ mod tests {
     #[case::ff("ff", "fsf")]
     #[case::one("1", "s")]
     #[case::a("a", "ss")]
-    fn test_hex_to_base9(#[case] input: &str, #[case] expected: &str) {
-        assert_eq!(hex_to_base9(input), expected);
+    fn test_hex_to_home_row(#[case] input: &str, #[case] expected: &str) {
+        assert_eq!(hex_to_home_row(input), expected);
     }
 
     #[test]
