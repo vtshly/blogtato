@@ -111,9 +111,8 @@ mod tests {
         assert_eq!(shorthands2.len(), 2);
         assert_ne!(shorthands2[0], shorthands2[1]);
         assert!(
-            shorthands2[0].len() > 1
-                || shorthands2[1].len() > 1
-                || shorthands2[0] != shorthands2[1]
+            shorthands2.iter().all(|s| s.len() > 1),
+            "shared hex prefix should force longer shorthands"
         );
     }
 
