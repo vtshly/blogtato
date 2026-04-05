@@ -288,7 +288,11 @@ fn test_sync_selected_feed_by_shorthand() {
 
     let alpha = rss_xml_with_guids(
         "Alpha Blog",
-        &[("Alpha Post", "Mon, 01 Jan 2024 00:00:00 +0000", "guid-alpha")],
+        &[(
+            "Alpha Post",
+            "Mon, 01 Jan 2024 00:00:00 +0000",
+            "guid-alpha",
+        )],
     );
     ctx.mock_rss_feed("/alpha.xml", &alpha);
 
@@ -316,7 +320,11 @@ fn test_sync_multiple_selected_feeds_by_shorthand() {
 
     let alpha = rss_xml_with_guids(
         "Alpha Blog",
-        &[("Alpha Post", "Mon, 01 Jan 2024 00:00:00 +0000", "guid-alpha")],
+        &[(
+            "Alpha Post",
+            "Mon, 01 Jan 2024 00:00:00 +0000",
+            "guid-alpha",
+        )],
     );
     ctx.mock_rss_feed("/alpha.xml", &alpha);
 
@@ -328,7 +336,11 @@ fn test_sync_multiple_selected_feeds_by_shorthand() {
 
     let gamma = rss_xml_with_guids(
         "Gamma Blog",
-        &[("Gamma Post", "Wed, 03 Jan 2024 00:00:00 +0000", "guid-gamma")],
+        &[(
+            "Gamma Post",
+            "Wed, 03 Jan 2024 00:00:00 +0000",
+            "guid-gamma",
+        )],
     );
     ctx.mock_rss_feed("/gamma.xml", &gamma);
 
@@ -339,8 +351,14 @@ fn test_sync_multiple_selected_feeds_by_shorthand() {
 
     let alpha_shorthand = feed_shorthand_for_url(&ctx, &alpha_url);
     let gamma_shorthand = feed_shorthand_for_url(&ctx, &gamma_url);
-    ctx.run(&["sync", "--feed", &alpha_shorthand, "--feed", &gamma_shorthand])
-        .success();
+    ctx.run(&[
+        "sync",
+        "--feed",
+        &alpha_shorthand,
+        "--feed",
+        &gamma_shorthand,
+    ])
+    .success();
 
     let posts = ctx.read_posts();
     let titles: Vec<&str> = posts.iter().map(|p| p["title"].as_str().unwrap()).collect();

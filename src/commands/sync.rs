@@ -1,12 +1,12 @@
-use std::time::Duration;
 use std::collections::HashSet;
+use std::time::Duration;
 
 use indicatif::{ProgressBar, ProgressStyle};
 use synctato::{SyncEvent, SyncResult};
 
+use crate::data::BlogData;
 use crate::data::index::{FeedIndex, feed_index};
 use crate::data::schema::FeedSource;
-use crate::data::BlogData;
 use crate::utils::progress::spinner;
 use crate::utils::version_check::check_for_newer_version;
 
@@ -64,9 +64,16 @@ fn do_sync_remote(store: &mut BlogData) -> anyhow::Result<SyncResult> {
     })
 }
 
-fn resolve_sync_sources(feed_index: &FeedIndex, selectors: &[String]) -> anyhow::Result<Vec<FeedSource>> {
+fn resolve_sync_sources(
+    feed_index: &FeedIndex,
+    selectors: &[String],
+) -> anyhow::Result<Vec<FeedSource>> {
     if selectors.is_empty() {
-        return Ok(feed_index.entries.iter().map(|entry| entry.feed.clone()).collect());
+        return Ok(feed_index
+            .entries
+            .iter()
+            .map(|entry| entry.feed.clone())
+            .collect());
     }
 
     let mut seen = HashSet::new();
